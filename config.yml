@@ -1,0 +1,45 @@
+---
+    - name: Using LaunchDarkly collection
+      hosts: localhost
+
+      tasks:
+        - name: Get real flags
+          register: real_flags
+          launchdarkly_labs.collection.launchdarkly_feature_flag_info:
+            api_key: API_KEY
+            project_key: support-service
+            summary: no
+            tag: real
+
+        - name: Get all flags
+          register: all_flags
+          launchdarkly_labs.collection.launchdarkly_feature_flag_info:
+            api_key: API_KEY
+            project_key: support-service
+
+        - name: all flags list
+          set_fact:
+            all_flags_keys: "{{ all_flags.feature_flags | json_query('items[*].key') | list }}"
+
+        - name: real flags list
+          set_fact:
+            real_flags_keys: "{{ real_flags.feature_flags | json_query('items[*].key') | list }}"
+
+        - name: diff flags list
+          set_fact:
+            diff_set_flags: "{{ all_flags_keys | difference(real_flags_keys) }}"
+
+        - name: show diff set flags
+          debug:
+            msg: "{{ diff_set_flags }}"
+
+        # - name: delete_feature_flags
+        #   launchdarkly_labs.collection.launchdarkly_feature_flag:
+        #     api_key: API_KEY
+        #     project_key: support-service
+        #     state: absent
+        #     key: "{{ item }}"
+        #   loop:
+        #     "{{ diff_set_flags }}"
+
+
